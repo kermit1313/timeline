@@ -43,3 +43,49 @@ class Retriever:
             add_to[index].append(task)
         except KeyError:
             add_to[index] = [task]
+
+
+class Retriever2:
+    def __init__(self, workbook):
+        self._workbook = workbook
+
+    def retrive_groups_stations(self):
+        groups = {}
+        stations = {}
+        columns = []
+        for column in self._workbook.iter_cols(values_only=True):
+            # print(column)
+            columns.append(column)
+        for x in range(0, len(columns), 2):
+            col = (columns[x+1], columns[x])
+            self._fetch_data_from_column(col, groups, stations)
+
+        Groups_stations = collections.namedtuple("Groups_stations", "groups stations")
+        return Groups_stations(groups=groups, stations=stations)
+
+    def _fetch_data_from_column(self, column, groups, stations):
+        print(column)
+        times, tasks = column
+        paired_tasks = self._pair_task_and_time(times, tasks)
+        print(paired_tasks)
+
+        for task_pair in paired_tasks:
+            if self._is_pair_filled(task_pair):
+                task = Task(task_pair.time, task_pair.resource)
+                self._add_task(task, groups, task.index)
+                self._add_task(task, stations, task.station_symbol)
+
+    def _pair_task_and_time(self, times, tasks) -> List[Task_pair]:
+        print(times)
+        print(tasks)
+
+        return [Task_pair(times[i], tasks[i]) for i in range(0, len(times))]
+
+    def _is_pair_filled(self, pair: Task_pair):
+        return pair.time and pair.resource
+
+    def _add_task(self, task: Task, add_to, index):
+        try:
+            add_to[index].append(task)
+        except KeyError:
+            add_to[index] = [task]
